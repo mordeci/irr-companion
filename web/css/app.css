@@ -352,7 +352,7 @@ details.brief p { margin: 6px 0 8px; }
 .iname small, .pc small { font-size: 11px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pc { text-align: right; display: flex; flex-direction: column; min-width: 0; }
 .pc.none { color: var(--faint); }
-.pc.cash b { color: var(--changed); } .pc.coins b { color: #5da9e9; } .pc.gain b { color: var(--higher); } .pc.unsure b { color: var(--faint); }
+.pc.cash b { color: var(--changed); } .pc.coins b { color: #5da9e9; } .pc.gain b { color: var(--higher); }
 .itable .caption { padding-top: 12px; border-bottom: 1px solid var(--track); margin-bottom: 4px; }
 .list .item.cat span:first-child { font-weight: 600; }
 @media (max-width: 820px) {

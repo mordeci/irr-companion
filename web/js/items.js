@@ -5,7 +5,7 @@ const COLUMNS = [
   { title: 'MARKET', tip: 'Buy at the market (cash). Small text: the faction loyalty level the market asks for.', key: i => i.buy ? i.price : 0 },
   { title: 'BLACK MKT', tip: 'Buy at the black market, in Marked Coins (MC).', key: i => i.coins || 0 },
   { title: 'TRADER', tip: 'Buy from a raid trader (cash): the market price. Small text: which traders can have it in stock (weapons are not listed).', key: i => i.traders ? i.price || 0 : 0 },
-  { title: 'SELL', tip: 'What the market pays you (cash): the market price x the share of the item\'s category (weapons 35 %, parts 45 %, gear and ammo 40 %, barter 80 %, keys 20 %, others 60 %). Grey with "?": the game files say it cannot be sold at the market.', key: i => i.sell || 0 },
+  { title: 'SELL', tip: 'What the market pays you (cash): the market price x the share of the item\'s category (weapons 35 %, parts 45 %, gear and ammo 40 %, barter 80 %, keys 20 %, others 60 %).', key: i => i.sell || 0 },
   { title: 'TRADER PAYS', tip: 'What a raid trader pays you for it (cash): only the quest crates.', key: i => i.handIn || 0 },
 ];
 
@@ -40,8 +40,7 @@ export async function mountItems(view) {
     else if (i.price) out.push('Not sold at the market (market price ' + money(i.price) + ').');
     if (i.coins) out.push('Black market: ' + i.coins + ' Marked Coins');
     for (const t of i.traders || []) out.push('Trader ' + t.who + ' (' + t.trader + '): ' + money(i.price) + ' cash, in stock ' + Math.round(t.chance * 100) + ' % of the time');
-    if (i.sell) out.push('Sell at the market: ' + money(i.sell) + ' cash (' + Math.round(mult(i.cat) * 100) + ' % of the price)' +
-      (i.noSell ? ' - the game files say it cannot be sold there: to check in game' : ''));
+    if (i.sell) out.push('Sell at the market: ' + money(i.sell) + ' cash (' + Math.round(mult(i.cat) * 100) + ' % of the price)');
     if (i.handIn) out.push('A raid trader pays ' + money(i.handIn) + ' cash for it.');
     out.push(i.id);
     return out.join('\n');
@@ -59,7 +58,7 @@ export async function mountItems(view) {
       cell(i.buy ? money(i.price) : null, i.buy && i.loyalty ? i.loyalty.faction + ' loyalty ' + i.loyalty.level : null, 'cash'),
       cell(i.coins ? i.coins + ' MC' : null, null, 'coins'),
       cell(i.traders && i.price ? money(i.price) : null, i.traders ? (i.traders.length === 1 ? i.traders[0].who : i.traders.length + ' traders') : null, 'cash'),
-      cell(i.sell ? (i.sell < 10 ? String(i.sell) : money(i.sell)) + (i.noSell ? ' ?' : '') : null, null, i.noSell ? 'unsure' : 'gain'),
+      cell(i.sell ? (i.sell < 10 ? String(i.sell) : money(i.sell)) : null, null, 'gain'),
       cell(i.handIn ? money(i.handIn) : null, null, 'gain'));
   }
 

@@ -179,8 +179,7 @@ barter, keys, quest items...), read from the game's vendor table and vendor sett
 - **Trader**: the price at a raid trader (the market price: no trader sets its own prices) and which traders can have
   it in stock (weapons are not listed).
 - **Sell**: what the market pays you: the price x the share of its category (weapons 35 %, parts 45 %, gear and ammo
-  40 %, barter 80 %, keys 20 %, others 60 %). A grey price with "?": the game files say the item cannot be sold at
-  the market (most barter items), to check in game.
+  40 %, barter 80 %, keys 20 %, others 60 %).
 - **Trader pays**: what a raid trader gives you for the quest crates (Chemical Crate 800, Data Storage Crate 760,
   Weapon Crate 690).
 - Weapons are priced new, with their default parts; ammunition per round. Click a column to sort, hover a row for the

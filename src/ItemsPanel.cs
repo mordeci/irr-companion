@@ -28,7 +28,7 @@ namespace IRRCompanion
             new Column { Title = "MARKET", Tip = "Buy at the market (cash). Small text: the faction loyalty level the market asks for.", Key = i => i.MarketBuy ? i.Price : 0 },
             new Column { Title = "BLACK MKT", Tip = "Buy at the black market, in Marked Coins.", Key = i => i.Coins },
             new Column { Title = "TRADER", Tip = "Buy from a raid trader (cash): the market price. Small text: which traders can have it in stock (weapons are not listed).", Key = i => i.TraderPrice },
-            new Column { Title = "SELL", Tip = "What the market pays you (cash): the market price x the share of the item's category (weapons 35 %, parts 45 %, gear and ammo 40 %, barter 80 %, keys 20 %, others 60 %). Grey with \"?\": the game files say it cannot be sold at the market.", Key = i => i.Sell },
+            new Column { Title = "SELL", Tip = "What the market pays you (cash): the market price x the share of the item's category (weapons 35 %, parts 45 %, gear and ammo 40 %, barter 80 %, keys 20 %, others 60 %).", Key = i => i.Sell },
             new Column { Title = "TRADER PAYS", Tip = "What a raid trader pays you for it (cash): only the quest crates.", Key = i => i.HandIn },
         };
 
@@ -150,7 +150,7 @@ namespace IRRCompanion
                 Cell(g, cells[1], it.Coins > 0 ? ItemData.Money(it.Coins) + " MC" : null, null, Theme.ColorA, right);
                 Cell(g, cells[2], it.TraderPrice > 0 ? ItemData.Money(it.TraderPrice) : null,
                     it.Traders.Count == 1 ? it.Traders[0].Who : it.Traders.Count > 1 ? it.Traders.Count + " traders" : null, Theme.Changed, right);
-                Cell(g, cells[3], it.Sell > 0 ? ItemData.Money(it.Sell) + (it.NoSell ? " ?" : "") : null, null, it.NoSell ? Theme.TextFaint : Theme.Higher, right);
+                Cell(g, cells[3], it.Sell > 0 ? ItemData.Money(it.Sell) : null, null, Theme.Higher, right);
                 Cell(g, cells[4], it.HandIn > 0 ? ItemData.Money(it.HandIn) : null, null, Theme.Higher, right);
             }
         }
@@ -201,8 +201,7 @@ namespace IRRCompanion
             foreach (var t in it.Traders)
                 lines.Add("Trader " + t.Who + " (" + t.Trader + "): " + ItemData.Money(it.Price) + " cash, in stock " + Math.Round(t.Chance * 100) + " % of the time");
             if (it.Sell > 0)
-                lines.Add("Sell at the market: " + ItemData.Money(it.Sell) + " cash (" + Math.Round(ItemData.SellMultiplier(it.Category) * 100) + " % of the price)" +
-                          (it.NoSell ? " - the game files say it cannot be sold there: to check in game" : ""));
+                lines.Add("Sell at the market: " + ItemData.Money(it.Sell) + " cash (" + Math.Round(ItemData.SellMultiplier(it.Category) * 100) + " % of the price)");
             if (it.HandIn > 0) lines.Add("A raid trader pays " + ItemData.Money(it.HandIn) + " cash for it.");
             lines.Add(it.Id);
             return string.Join("\n", lines);
