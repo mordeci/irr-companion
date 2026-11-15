@@ -26,6 +26,7 @@ namespace IRRCompanion
         public static readonly Color ExtractionColor = Color.FromArgb(0, 230, 118);
         public static readonly Color SpawnColor = Color.FromArgb(79, 195, 247);
         public static readonly Color TraderColor = Color.FromArgb(240, 98, 146);
+        public static readonly Color TerminalColor = Color.FromArgb(178, 196, 204);
 
         public MapCanvas()
         {
@@ -134,6 +135,7 @@ namespace IRRCompanion
                 case MapData.Extraction: return ExtractionColor;
                 case MapData.PlayerSpawn: return SpawnColor;
                 case MapData.Trader: return TraderColor;
+                case MapData.Terminal: return TerminalColor;
                 case "CompactSafe": return Color.FromArgb(240, 200, 90);
                 case "LargeSafe": return Color.FromArgb(255, 140, 40);
                 case "HasDoor": return Color.FromArgb(186, 120, 220);
@@ -172,6 +174,23 @@ namespace IRRCompanion
                 using (var b = new SolidBrush(dark))
                 using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                     g.DrawString("$", f, b, new RectangleF(c.X - rr, c.Y - rr + rr * 0.05f, 2 * rr, 2 * rr), sf);
+                return;
+            }
+            if (type == MapData.Terminal)
+            {
+                // silver disc with a computer screen on its stand (a terminal to hack)
+                using (var b = new SolidBrush(col)) g.FillEllipse(b, c.X - rr, c.Y - rr, 2 * rr, 2 * rr);
+                using (var pen = new Pen(dark, hot ? 2.4f : 1.6f)) g.DrawEllipse(pen, c.X - rr, c.Y - rr, 2 * rr, 2 * rr);
+                float sw = rr * 1.05f, sh = rr * 0.72f;
+                var screen = new RectangleF(c.X - sw / 2, c.Y - rr * 0.52f, sw, sh);
+                using (var b = new SolidBrush(dark))
+                {
+                    g.FillRectangle(b, screen);
+                    g.FillRectangle(b, c.X - rr * 0.07f, screen.Bottom, rr * 0.14f, rr * 0.2f);
+                    g.FillRectangle(b, c.X - rr * 0.32f, screen.Bottom + rr * 0.18f, rr * 0.64f, rr * 0.13f);
+                }
+                using (var b = new SolidBrush(col))
+                    g.FillRectangle(b, screen.X + rr * 0.17f, screen.Y + rr * 0.17f, rr * 0.3f, rr * 0.1f);  // a prompt line
                 return;
             }
             if (type == MapData.Extraction)
@@ -261,6 +280,24 @@ namespace IRRCompanion
                 lines.Add(new KeyValuePair<string, Font>(p.Name ?? "Trader", Theme.Bold));
                 lines.Add(new KeyValuePair<string, Font>("Trader of the " + p.Faction + (full != null ? " (" + full + ")" : ""), Theme.Body));
                 lines.Add(new KeyValuePair<string, Font>("What it can have in stock: TRADERS tab.", Theme.Small));
+            }
+            else if (p.IsTerminal)
+            {
+                string full;
+                MapData.FactionNames.TryGetValue(p.Faction ?? "", out full);
+                lines.Add(new KeyValuePair<string, Font>(p.Faction + " terminal", Theme.Bold));
+                if (full != null) lines.Add(new KeyValuePair<string, Font>(full, Theme.Body));
+                lines.Add(new KeyValuePair<string, Font>("Hack it with:", Theme.Small));
+                foreach (var id in p.HackKeys ?? new string[0])
+                {
+                    var it = ItemData.Items.FirstOrDefault(i => i.Id == id);
+                    lines.Add(new KeyValuePair<string, Font>(it != null ? it.Name : id, Theme.Bold));
+                    if (it != null && it.MarketBuy)
+                        lines.Add(new KeyValuePair<string, Font>("Market: " + ItemData.Money(it.Price) + " cash" +
+                            (it.LoyaltyFaction != null ? ", needs " + it.LoyaltyFaction + " loyalty " + it.LoyaltyLevel : ""), Theme.Small));
+                    if (keyIcon == null) keyIcon = Icons.Item(id);
+                }
+                if (p.HackKeys == null || p.HackKeys.Length == 0) lines.Add(new KeyValuePair<string, Font>("No USB device found in the game files.", Theme.Body));
             }
             else if (p.IsLock)
             {
@@ -472,6 +509,7 @@ namespace IRRCompanion
             _tip = tip;
             MapData.Load();
             LootData.Load();
+            ItemData.Load();
 
             var left = new Panel { Dock = DockStyle.Left, Width = Theme.S(260), BackColor = Theme.Panel, Padding = new Padding(Theme.S(12), Theme.S(4), Theme.S(12), Theme.S(12)) };
             var mapsHeader = new SectionHeader("Map") { BackColor = Theme.Panel, Height = Theme.S(36) };
@@ -535,7 +573,7 @@ namespace IRRCompanion
 
             var showHeader = new SectionHeader("Show") { BackColor = Theme.Panel, Height = Theme.S(40) };
             var filterBox = new Panel { Dock = DockStyle.Top, BackColor = Theme.Panel };
-            var types = MapData.Resources.Select(r => r.Type).Concat(new[] { MapData.PlayerSpawn, MapData.Trader, MapData.Extraction }).Concat(MapData.LockKinds).ToList();
+            var types = MapData.Resources.Select(r => r.Type).Concat(new[] { MapData.PlayerSpawn, MapData.Trader, MapData.Terminal, MapData.Extraction }).Concat(MapData.LockKinds).ToList();
             for (int i = types.Count - 1; i >= 0; i--)
             {
                 var f = new FilterRow(types[i]);
@@ -549,11 +587,13 @@ namespace IRRCompanion
 
             _summary = new Label { Dock = DockStyle.Top, Font = Theme.Small, ForeColor = Theme.TextDim, BackColor = Theme.Back, AutoSize = false, Height = Theme.S(36), UseMnemonic = false, AutoEllipsis = true };
             tip.SetToolTip(_summary, "Each point has its own chance to be there when the raid starts.");
-            var hint = Theme.Lbl("Wheel: zoom · drag: move · double-click: fit. Hover a point for its chance or the key it needs. Find an item: where it can spawn (estimate from the loot settings).", Theme.Small, Theme.TextDim);
+            var hint = Theme.Lbl("Wheel: zoom · drag: move · double-click: fit. Hover a point for its chance or the key it needs (a terminal: the USB device that hacks it). Find an item: where it can spawn (estimate from the loot settings).", Theme.Small, Theme.TextDim);
             hint.AutoSize = false;
-            hint.Dock = DockStyle.Bottom;
-            hint.Height = Theme.S(92);
+            hint.Dock = DockStyle.Top;  // under the filters (added first: docked last)
+            hint.Height = Theme.S(100);
+            hint.Padding = new Padding(0, Theme.S(10), 0, 0);
 
+            left.Controls.Add(hint);
             left.Controls.Add(filterBox);
             left.Controls.Add(showHeader);
             left.Controls.Add(findBox);
@@ -561,7 +601,6 @@ namespace IRRCompanion
             left.Controls.Add(_floorBox);
             left.Controls.Add(_maps);
             left.Controls.Add(mapsHeader);
-            left.Controls.Add(hint);
 
             var right = new Panel { Dock = DockStyle.Fill, BackColor = Theme.Back, Padding = new Padding(Theme.S(12)) };
             _title = new Label { Dock = DockStyle.Top, Height = Theme.S(36), Font = Theme.Title, ForeColor = Theme.Text, BackColor = Theme.Back, UseMnemonic = false };

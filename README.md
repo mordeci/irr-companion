@@ -16,7 +16,7 @@ One portable `.exe`, nothing to install, nothing written to the game's files.
 | **ITEMS** | Every item of the game by category, with its price at the market, at the black market and at the raid traders, and what the market or a trader pays you for it. |
 | **TRADERS** | What the traders met in raids (Lt Moroz, Cpt Hale, Voss, Ba Tran) can have in stock, with the chance and the price of every item (weapons left out). |
 | **HIDEOUT** | See the cost of every hideout upgrade with the game icons, track your progress and get a shopping list. |
-| **MAPS** | Player spawns (the infill locations you pick when deploying), traders, resource spawn points, extraction points, safes and locked doors (with the key they need) on the game maps, and a heatmap of where any item can spawn. |
+| **MAPS** | Player spawns (the infill locations you pick when deploying), traders, terminals (with the USB device that hacks them), resource spawn points, extraction points, safes and locked doors (with the key they need) on the game maps, and a heatmap of where any item can spawn. |
 | **MISSIONS** | The story missions as a tree, in the order the game gives them (branches side by side), with what to do in each one, the rewards and the briefing. |
 
 ## Web version
@@ -216,7 +216,10 @@ spawn point placed in the map files, the player spawns, the extraction points, t
   which zone is *Riverside* and which is *Warehouse*: they are named from their place (checked in game).
 - **Traders**: where Lt Moroz (Delta), Cpt Hale (Quarry), Voss (Outskirts) and Ba Tran (Bunker) stand (pink, with their
   name); hover one for its faction. What they sell is in the TRADERS tab.
-- **Filters**: show or hide Concrete, Food, Metal, Oil, player spawns, traders, extraction points, compact safes, large safes,
+- **Terminals**: the faction computers you can hack (silver, with a screen): 2 IGC on Delta, 2 UICS on Quarry, 3 UICS
+  on Outskirts, 2 VLF in the Bunker. Hover one to see the **USB hacking device** that hacks it (IGC, UICS or VLF:
+  the device of the terminal's faction), with its icon and its market price.
+- **Filters**: show or hide Concrete, Food, Metal, Oil, player spawns, traders, terminals, extraction points, compact safes, large safes,
   HAS doors and locked doors (with their count).
 - **Safes and doors**: hover one to see the key it needs, with the key's icon (e.g. *Outskirts Large Safe Key*,
   *HAS-0410-A key*). Only doors that open with a key are shown.
@@ -407,7 +410,7 @@ release - is the Claude Code skill [`.claude/skills/update-irr-tool/SKILL.md`](.
 | `build_traders.py` | `src/Resources/traders.json`: stock of each trader (trader presets `Presets/Container/Traders/DA_Trader_*`), the chance of every item and its market price (vendor table) |
 | `build_hideout.py` | `src/Resources/hideout.json`: costs and requirements of every hideout unit level |
 | `build_icons.py` | `src/Resources/icons/`: icons of the hideout items, map keys, weapons, parts and ammo, cash and materials (+ `EXTRA_ITEMS`) |
-| `build_maps.py` | `src/Resources/maps.json` and `maps/*.jpg`: resource and extraction points, player spawn zones and their infill names, traders, safes and locked doors with their keys, minimaps and their bounds |
+| `build_maps.py` | `src/Resources/maps.json` and `maps/*.jpg`: resource and extraction points, player spawn zones and their infill names, traders, terminals and their USB hacking devices, safes and locked doors with their keys, minimaps and their bounds |
 | `build_missions.py` | `src/Resources/missions.json`: order of the story missions (mission graph `MG_MainStory`), steps and objectives, briefings, rewards, side missions they give |
 | `build_items.py` | `src/Resources/items.json`: every item with its category, market / black market / trader prices, sell price (vendor settings multipliers) and trader hand-in prices |
 | `irr_sharecode.py` | decode / encode share codes from the command line |

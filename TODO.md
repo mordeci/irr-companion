@@ -57,6 +57,10 @@ Traders (read from the trader presets DA_Trader_IGC / UICS / VLF):
 - [x] Traders and maps: all four read from the maps (Lt Moroz on Delta found in a World Partition cell, 2026-11-13).
 - [ ] Trader positions on the MAPS tab match the game, especially Ba Tran on Bunker (floor 3, just outside the drawn
       plan: the minimap may not draw that room).
+- [ ] Terminals on the MAPS tab: check in game that each one is hacked with the USB device of its faction. The two
+      Quarry terminals (BP_Terminal_UICS_A / _B) name no terminal setup in the game files (DA_Terminal_UICS_Quarry
+      exists but nothing uses it): UICS device assumed. The Bunker VLF terminal at z -4255 is drawn on the lowest
+      floor (Floor 7), 600 below its plan: check its floor.
 - [ ] Hand-in prices of the quest crates at the traders (BP_RaidTrader price overrides): Chemical Crate 800,
       Data Storage Crate 760, Weapon Crate 690 - not shown in the app yet.
 - [ ] The 35 "always in stock" barter items (60 units) really are in every stock.

@@ -1368,6 +1368,8 @@ namespace IRRCompanion
             shot("maps_bunker");
             _mapsPanel.TestShowLock("Outskirts", "LargeSafe");
             shot("maps_safe_hover");
+            _mapsPanel.TestShowLock("Delta", MapData.Terminal);
+            shot("maps_terminal_hover");
             _mapsPanel.TestHeat("Delta", "Graphics_Card");
             shot("maps_heat_graphics");
             _mapsPanel.TestHeat("Quarry", "Bandage");

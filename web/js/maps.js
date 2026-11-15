@@ -1,12 +1,12 @@
-// MAPS tab: minimaps with resource / player spawn / trader / extraction / lock markers and the item heatmap (same data as the desktop app).
-import { data, el, iconUrl, pct, showTip, hideTip, escapeHtml, debounce } from './app.js?v=dev';
+// MAPS tab: minimaps with resource / player spawn / trader / terminal / extraction / lock markers and the item heatmap (same data as the desktop app).
+import { data, el, iconUrl, pct, money, showTip, hideTip, escapeHtml, debounce } from './app.js?v=dev';
 
 const COLORS = {
-  Concrete: '#aaa69c', Food: '#8bc34a', Metal: '#5da9e9', Oil: '#f0a040', Extraction: '#00e676', PlayerSpawn: '#4fc3f7', Trader: '#f06292',
+  Concrete: '#aaa69c', Food: '#8bc34a', Metal: '#5da9e9', Oil: '#f0a040', Extraction: '#00e676', PlayerSpawn: '#4fc3f7', Trader: '#f06292', Terminal: '#b2c4cc',
   CompactSafe: '#f0c85a', LargeSafe: '#ff8c28', HasDoor: '#ba78dc', LockedDoor: '#ef5350',
 };
 const LABELS = {
-  Extraction: 'Extraction points', PlayerSpawn: 'Player spawns', Trader: 'Traders', CompactSafe: 'Compact safes', LargeSafe: 'Large safes', HasDoor: 'HAS doors', LockedDoor: 'Locked doors',
+  Extraction: 'Extraction points', PlayerSpawn: 'Player spawns', Trader: 'Traders', Terminal: 'Terminals', CompactSafe: 'Compact safes', LargeSafe: 'Large safes', HasDoor: 'HAS doors', LockedDoor: 'Locked doors',
 };
 const SINGLE = { Extraction: 'Extraction point', CompactSafe: 'Compact safe', LargeSafe: 'Large safe', HasDoor: 'HAS door', LockedDoor: 'Locked door' };
 const LOCKS = ['CompactSafe', 'LargeSafe', 'HasDoor', 'LockedDoor'];
@@ -14,10 +14,11 @@ const FACTIONS = { IGC: 'Iron Guard Corps', UICS: 'United Intercontinental Secur
 const LABELED = new Set(['PlayerSpawn', 'Trader']);  // drawn with their name
 
 export async function mountMaps(view) {
-  const [md, loot] = await Promise.all([data('maps.json'), data('loot.json')]);
+  const [md, loot, itemData] = await Promise.all([data('maps.json'), data('loot.json'), data('items.json')]);
+  const items = new Map(itemData.items.map(i => [i.id, i]));
   const keys = Object.fromEntries(md.keys.map(k => [k.tag, k]));
   const resources = md.resources;
-  const types = resources.map(r => r.type).concat(['PlayerSpawn', 'Trader', 'Extraction'], LOCKS);
+  const types = resources.map(r => r.type).concat(['PlayerSpawn', 'Trader', 'Terminal', 'Extraction'], LOCKS);
   const shown = new Set(types);
   const maps = md.maps.map(m => ({
     name: m.name, floors: m.floors,
@@ -26,6 +27,7 @@ export async function mountMaps(view) {
       m.extractions.map(p => ({ ...p, type: 'Extraction' })),
       (m.spawns || []).map(p => ({ ...p, type: 'PlayerSpawn' })),
       (m.traders || []).map(p => ({ ...p, type: 'Trader' })),
+      (m.terminals || []).map(p => ({ ...p, type: 'Terminal' })),
       m.locks.map(p => ({ ...p, type: p.kind })),
     ),
   }));
@@ -46,7 +48,7 @@ export async function mountMaps(view) {
     el('div.m-maps', null, el('div.section', { text: 'Map' }), mapList, floorBox),
     el('div.m-find', null, el('div.section', { text: 'Find an item' }), el('div.find', null, findInput, clearBtn), datalist),
     el('div.m-filters', null, el('div.section', { text: 'Show' }), filterBox),
-    el('div.hint.m-hint', { text: 'Wheel / pinch: zoom · drag: move · double-click / double-tap: fit. Blue: player spawns (pick one when you deploy), pink: traders. Hover or tap a point for its chance or the key it needs. Find an item: where it can spawn (estimate from the loot settings).' }),
+    el('div.hint.m-hint', { text: 'Wheel / pinch: zoom · drag: move · double-click / double-tap: fit. Blue: player spawns (pick one when you deploy), pink: traders. Hover or tap a point for its chance or the key it needs (a terminal: the USB device that hacks it). Find an item: where it can spawn (estimate from the loot settings).' }),
   );
   const title = el('div.title');
   const summary = el('div.summary');
@@ -183,6 +185,18 @@ export async function mountMaps(view) {
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('$', x, y + r * 0.06);
       ctx.textAlign = 'start';
+      return;
+    }
+    if (type === 'Terminal') {
+      // silver disc with a computer screen on its stand (a terminal to hack)
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      const sw = r * 1.05, sh = r * 0.72, sy = y - r * 0.52;
+      ctx.fillStyle = dark;
+      ctx.fillRect(x - sw / 2, sy, sw, sh);
+      ctx.fillRect(x - r * 0.07, sy + sh, r * 0.14, r * 0.2);
+      ctx.fillRect(x - r * 0.32, sy + sh + r * 0.18, r * 0.64, r * 0.13);
+      ctx.fillStyle = col;
+      ctx.fillRect(x - sw / 2 + r * 0.17, sy + r * 0.17, r * 0.3, r * 0.1);  // a prompt line
       return;
     }
     if (type === 'Extraction') {
@@ -401,6 +415,15 @@ export async function mountMaps(view) {
     if (p.type === 'Extraction') return '<b style="color:' + COLORS.Extraction + '">Extraction point</b>';
     if (p.type === 'Trader') return '<b style="color:' + COLORS.Trader + '">' + escapeHtml(p.name || 'Trader') + '</b>Trader of the ' +
       escapeHtml(p.faction) + (FACTIONS[p.faction] ? ' (' + FACTIONS[p.faction] + ')' : '') + '<br><i>What it can have in stock: TRADERS tab.</i>';
+    if (p.type === 'Terminal') {
+      const ks = (p.keys || []).map(id => items.get(id) || { id, name: id });
+      const text = '<b style="color:' + COLORS.Terminal + '">' + escapeHtml(p.faction) + ' terminal</b>' + (FACTIONS[p.faction] ? escapeHtml(FACTIONS[p.faction]) + '<br>' : '') +
+        '<i>Hack it with:</i>' + (ks.length ? ks.map(k => '<b>' + escapeHtml(k.name) + '</b>' + (k.buy ? '<i>Market: ' + money(k.price) + ' cash' +
+          (k.loyalty ? ', needs ' + escapeHtml(k.loyalty.faction) + ' loyalty ' + k.loyalty.level : '') + '</i>' : '')).join('') : '<br>No USB device found in the game files.');
+      if (!ks.length) return text;
+      return '<div style="display:flex;gap:10px;align-items:center"><img src="' + iconUrl('item_' + ks[0].id) +
+        '" alt="" style="width:52px;height:52px;flex:none;background:#3e3a35"><div>' + text + '</div></div>';
+    }
     if (p.type === 'PlayerSpawn') return '<b style="color:' + COLORS.PlayerSpawn + '">' + escapeHtml(p.name || 'Player spawn') +
       '</b>Player spawn: pick it when you deploy.<br>Your squad starts around this point.' +
       (p.guessed ? '<br><i>Name guessed from the place: the game files do not say.</i>' : '');

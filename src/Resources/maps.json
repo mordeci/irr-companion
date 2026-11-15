@@ -778,6 +778,28 @@
      "z": 191,
      "floor": 0
     }
+   ],
+   "terminals": [
+    {
+     "faction": "IGC",
+     "keys": [
+      "USB_Hacking_Device_IGC"
+     ],
+     "x": -48394,
+     "y": 1375,
+     "z": -49,
+     "floor": 0
+    },
+    {
+     "faction": "IGC",
+     "keys": [
+      "USB_Hacking_Device_IGC"
+     ],
+     "x": -101899,
+     "y": -33991,
+     "z": -593,
+     "floor": 0
+    }
    ]
   },
   {
@@ -1688,6 +1710,28 @@
      "z": 5422,
      "floor": 0
     }
+   ],
+   "terminals": [
+    {
+     "faction": "UICS",
+     "keys": [
+      "USB_Hacking_Device_UICS"
+     ],
+     "x": -124715,
+     "y": -61770,
+     "z": 864,
+     "floor": 0
+    },
+    {
+     "faction": "UICS",
+     "keys": [
+      "USB_Hacking_Device_UICS"
+     ],
+     "x": -81360,
+     "y": -86210,
+     "z": 6190,
+     "floor": 0
+    }
    ]
   },
   {
@@ -2178,6 +2222,38 @@
      "z": -2116,
      "floor": 0
     }
+   ],
+   "terminals": [
+    {
+     "faction": "UICS",
+     "keys": [
+      "USB_Hacking_Device_UICS"
+     ],
+     "x": 9962,
+     "y": 57186,
+     "z": -1898,
+     "floor": 0
+    },
+    {
+     "faction": "UICS",
+     "keys": [
+      "USB_Hacking_Device_UICS"
+     ],
+     "x": 11560,
+     "y": 74937,
+     "z": -1913,
+     "floor": 0
+    },
+    {
+     "faction": "UICS",
+     "keys": [
+      "USB_Hacking_Device_UICS"
+     ],
+     "x": -13076,
+     "y": 77198,
+     "z": -1913,
+     "floor": 0
+    }
    ]
   },
   {
@@ -2594,6 +2670,28 @@
      "x": 39,
      "y": 9465,
      "z": -286,
+     "floor": 2
+    }
+   ],
+   "terminals": [
+    {
+     "faction": "VLF",
+     "keys": [
+      "USB_Hacking_Device_VLF"
+     ],
+     "x": 13198,
+     "y": -5237,
+     "z": -4255,
+     "floor": 6
+    },
+    {
+     "faction": "VLF",
+     "keys": [
+      "USB_Hacking_Device_VLF"
+     ],
+     "x": 4885,
+     "y": 8481,
+     "z": 120,
      "floor": 2
     }
    ]

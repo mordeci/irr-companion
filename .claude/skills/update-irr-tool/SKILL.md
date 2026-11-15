@@ -298,6 +298,11 @@ from `maps.json`).
   references. Doors without a key are skipped (they never open). `references several keys` or `key without
   item definition`: check the actor by hand. New lock class (new safe type...): add it to `LOCKS` and to
   `MapData.LockKinds` / labels / colours in `src/Maps.cs` and `src/MapsPanel.cs`.
+- Terminals: `BP_Terminal_*_C` actors of the persistent levels; the USB device that hacks one is the
+  `USB Hacking Device` tag of the `DA_Terminal_*` setup its class names (`terminal_keys`). `names no terminal
+  setup` is expected for FANG (not placed) and Quarry's UICS_A / _B today (faction device assumed); a new terminal
+  class or a new warning: check it. `properties ..., expected 140, 161, 162` or `at an odd place`: the StaticMesh
+  layout changed (`read_terminals`).
 - New map: add it to `MAPS` (display name, persistent level path). A map whose minimap is a grey plan goes in
   `PLAN_MAPS` (drawn inverted, like the Bunker).
 - `first property ... expected 161` (or 5 / 0): the component layout changed; check `LOCATION_INDEX`.
@@ -334,7 +339,7 @@ src\bin\Debug\net462\IRRCompanion.exe --screenshot <work>\shot
 `--screenshot <prefix> [ui size]` (Debug build only, e.g. `1.25` to check the UI size setting) writes PNGs of every view: `_edit`, `_edit_scrolled`,
 `_edit_advanced_closed`, `_edit_advanced`, `_edit_performance`, `_edit_changed_only`, `_builtin`, `_compare`, `_compare_diff`, `_compare_advanced`, `_compare_difficulties`, `_commands_weather`, `_commands_item`,
 `_commands_player`, `_commands_cvar`, `_commands_favorites`, `_hideout_unit`, `_hideout_stash`,
-`_weapons`, `_weapons_aug`, `_traders`, `_traders_vlf`, `_traders_search`, `_hideout_shopping`, `_hideout_shopping_all`, `_maps_quarry`, `_maps_delta_hover`, `_maps_bunker`, `_maps_safe_hover`, `_maps_heat_graphics`, `_maps_heat_bandage` (and `.error.txt` if it crashed). Look at each image:
+`_weapons`, `_weapons_aug`, `_traders`, `_traders_vlf`, `_traders_search`, `_hideout_shopping`, `_hideout_shopping_all`, `_maps_quarry`, `_maps_delta_hover`, `_maps_bunker`, `_maps_safe_hover`, `_maps_terminal_hover`, `_maps_heat_graphics`, `_maps_heat_bandage` (and `.error.txt` if it crashed). Look at each image:
 - PRESETS: header (name, state line, SAVE / COPY CODE / COMPARE / ⋯), every section of the in-game menu, names not cut, values formatted like the game, nothing scrolled;
   the ADVANCED and PERFORMANCE bars at the bottom, closed, then open with their sections in order;
   *Only changed settings* hides the equal rows and empty sections.

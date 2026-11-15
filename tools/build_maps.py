@@ -25,6 +25,11 @@ Where the data comes from (cooked with unversioned properties):
   end up in a World Partition cell (Maps/.../LVL_<Map>/_Generated_/*.umap, world positions): the cells that name
   BP_RaidTrader are read too. Trader name = the Trader.<name> tag of the blueprint
   Blueprints/InventorySystem/BaseActors/Trader/BP_RaidTrader_<x>; faction = the first part of <x> (IGC, UICS, VLF).
+- Terminals: BP_Terminal_<x>_C actors of the persistent levels (their root is the StaticMeshComponent "StaticMesh":
+  properties 140 (6 bytes), 161 RelativeLocation, 162 RelativeRotation). Faction = the first part of <x>. The key
+  that hacks it is the "USB Hacking Device" item tag of the terminal setup DA_Terminal_* that the class
+  Blueprints/InteractionSystem/Actors/Terminal/BP_Terminal_<x> names (its "hack" command asks for that item). A class
+  that names no setup (BP_Terminal_UICS_A / _B of Quarry) gets the USB device of its faction.
 - Minimaps: each BP_IRRMiniMapVolume_C actor gives a centre (SceneComponent RelativeLocation), a half size
   (BoxComponent BoxExtent, index 0) and its texture T_LVL_<Map>_Minimap_*. Several volumes = several floors
   (Bunker). Image orientation: world +X is up, +Y is right (checked against the buildings and the quarry).
@@ -81,6 +86,10 @@ KEY_TAG = 'Inventory.Items.Keys.'
 # with neither never open and are left out.
 DOORS_DIR = 'Test_C/Content/Blueprints/InteractionSystem/Actors/Door/'
 TRADERS_DIR = 'Test_C/Content/Blueprints/InventorySystem/BaseActors/Trader/'
+TERMINALS_DIR = 'Test_C/Content/Blueprints/InteractionSystem/Actors/Terminal/'
+TERMINAL_SETUPS = 'Test_C/Content/Blueprints/MissionSystem/DataAssets/Terminal/'
+USB_DIR = 'Test_C/Content/Blueprints/InventorySystem/Items/Barter/'
+USB_TAG = 'Inventory.Items.Barter.Electronics.USB Hacking Device '
 LOCKS = {
     'BP_LootContainer_Safe_01_C': 'CompactSafe',
     'BP_LootContainer_Safe_02_C': 'LargeSafe',
@@ -376,6 +385,66 @@ def read_traders(L, names, floors, map_name, problems):
     return out
 
 
+def usb_items(tmp):
+    """USB hacking device tag -> item id (ID_USB_Hacking_Device_*.uasset)."""
+    out = {}
+    for path in glob.glob(os.path.join(tmp, USB_DIR.replace('/', os.sep), 'USB_Hacking_Device_*', 'ID_*.uasset')):
+        tags = [n for n in package_full(path)[0] if n.startswith(USB_TAG)]
+        if len(tags) == 1:
+            out[tags[0]] = os.path.basename(path)[3:-7]
+    return out
+
+
+def terminal_keys(tmp, usb, problems):
+    """Terminal class (BP_Terminal_X_C) -> the item ids of the USB devices that hack it."""
+    out = {}
+    for path in glob.glob(os.path.join(tmp, TERMINALS_DIR.replace('/', os.sep), 'BP_Terminal_*.uasset')):
+        cls = os.path.basename(path)[:-7] + '_C'
+        setups = sorted(n for n in package_full(path)[0] if n.startswith('DA_Terminal_'))
+        tags = set()
+        for st in setups:
+            sp = os.path.join(tmp, (TERMINAL_SETUPS + st + '.uasset').replace('/', os.sep))
+            if os.path.exists(sp):
+                tags |= {n for n in package_full(sp)[0] if n.startswith(USB_TAG)}
+            else:
+                problems.append('terminal setup %s of %s not found' % (st, cls))
+        if not setups:
+            faction = cls[len('BP_Terminal_'):-2].split('_')[0]
+            tags = {USB_TAG + faction} if USB_TAG + faction in usb else set()
+            problems.append('%s names no terminal setup: its key is guessed from its faction (%s)' % (cls, faction))
+        out[cls] = sorted(usb[t] for t in tags if t in usb)
+    return out
+
+
+def read_terminals(L, keys, floors, map_name, problems):
+    """Terminal actors of a level: [{'faction', 'keys', 'x', 'y', 'z', 'floor'}]."""
+    out = []
+    for i, e in enumerate(L.exports, 1):
+        cls = e['class']
+        if not (cls.startswith('BP_Terminal_') and cls.endswith('_C')):
+            continue
+        sm = [c for c in L.children(i) if c['class'] == 'StaticMeshComponent' and c['name'] == 'StaticMesh']
+        if not sm:
+            problems.append('%s: terminal %s without its StaticMesh' % (map_name, cls))
+            continue
+        b = L.blob(sm[0])
+        idx, o = unversioned(b)
+        if idx[:3] != [140, 161, 162]:
+            problems.append('%s: terminal %s: properties %s, expected 140, 161, 162' % (map_name, cls, idx[:3]))
+            continue
+        x, y, z = struct.unpack_from('<ddd', b, o + 6)
+        pitch, _, roll = struct.unpack_from('<ddd', b, o + 30)
+        f = floors[0] if floors else None
+        if abs(pitch) > 1 or abs(roll) > 1 or (f and (abs(x - f['centerX']) > f['extent'] or abs(y - f['centerY']) > f['extent'])):
+            problems.append('%s: terminal %s at an odd place (%d, %d, %d): check the property layout' % (map_name, cls, x, y, z))
+            continue
+        if not keys.get(cls):
+            problems.append('%s: terminal %s without a USB hacking device' % (map_name, cls))
+        out.append({'faction': cls[len('BP_Terminal_'):-2].split('_')[0], 'keys': keys.get(cls, []),
+                    'x': round(x), 'y': round(y), 'z': round(z), 'floor': floor_of(z, floors)})
+    return out
+
+
 def floor_of(z, floors):
     inside = [f for f in floors if abs(z - f['centerZ']) <= f['extentZ'] + 50]
     pool = inside or floors
@@ -395,6 +464,8 @@ def main():
         wanted += [f for f in files if f.startswith(KEYS_DIR) and '/ID_' in f]
         wanted += [f for f in files if f.startswith(DOORS_DIR) and '/BP_Door_' in f]
         wanted += [f for f in files if f.startswith(TRADERS_DIR) and '/BP_RaidTrader_' in f]
+        wanted += [f for f in files if f.startswith(TERMINALS_DIR) or f.startswith(TERMINAL_SETUPS)]
+        wanted += [f for f in files if f.startswith(USB_DIR + 'USB_Hacking_Device_') and '/ID_' in f]
         # World Partition cells of the maps: their headers first (to find the cells that place a trader)
         cells = [f for _, lvl in MAPS for f in files if f.startswith(lvl + '/_Generated_/') and f.endswith('.umap')]
         wanted += cells
@@ -409,6 +480,8 @@ def main():
         door_keys = class_keys(tmp)
         tnames = trader_names(tmp)
         print('trader blueprints:', tnames)
+        tkeys = terminal_keys(tmp, usb_items(tmp), problems)
+        print('terminal keys:', tkeys)
         trader_cells = [c for c in cells if b'BP_RaidTrader' in open(os.path.join(tmp, c.replace('/', os.sep)), 'rb').read()]
         extract(repak, files, [c[:-5] + '.uexp' for c in trader_cells], tmp)
         print('door classes with a key:', door_keys)
@@ -532,6 +605,7 @@ def main():
                         continue
                     extractions.append({'x': round(x), 'y': round(y), 'z': round(z), 'floor': floor_of(z, floors)})
             traders = read_traders(L, tnames, floors, name, problems)
+            terminals = read_terminals(L, tkeys, floors, name, problems)
             L.f.close()
             for c in trader_cells:
                 if c.startswith(lvl + '/'):
@@ -546,6 +620,7 @@ def main():
             for l in locks:
                 lk[l['kind']] = lk.get(l['kind'], 0) + 1
             print('           locks %s' % lk)
+            print('           terminals %s' % ', '.join('%s (%s, %d, %d, floor %d)' % (t['faction'], '/'.join(t['keys']), t['x'], t['y'], t['floor']) for t in terminals))
             print('           traders %s' % ', '.join('%s (%s, %d, %d, floor %d)' % (t['name'], t['faction'], t['x'], t['y'], t['floor']) for t in traders))
             maps_out.append({
                 'name': name,
@@ -556,6 +631,7 @@ def main():
                 'spawns': spawns,
                 'locks': locks,
                 'traders': traders,
+                'terminals': terminals,
             })
         for f in sorted(old_images - set(images_done.values())):
             os.remove(os.path.join(OUT_IMG, f))
